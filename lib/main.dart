@@ -1,8 +1,40 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+class CounterStorage {
+
+  Future<String> get _localPath async {
+    final directory = await getApplicationDocumentsDirectory();
+    return directory.path;
+  }
+
+  Future<File> get _localFile async {
+    final path = await _localPath;
+    return File('$path/counter.txt');
+  }
+
+  Future<int> readCounter() async {
+    try {
+      final file = await _localFile;
+      final contents = await file.readAsString();
+      return int.parse(contents);
+
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  Future<File> writeCounter(int counter) async {
+    final file = await _localFile;
+    return file.writeAsString('$counter');
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -16,15 +48,15 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Shared preferences'),
+      home: MyHomePage(counterStorage: CounterStorage()),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
+  const MyHomePage({super.key, required this.counterStorage});
 
-  final String title;
+  final CounterStorage counterStorage;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -34,17 +66,19 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   void _incrementCounter() async {
-    final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _counter = (prefs.getInt('counter') ?? 0) + 1;
-      prefs.setInt('counter', _counter);
+      _counter++;
+      widget.counterStorage.writeCounter(_counter);
     });
+
+
   }
 
   Future<void> _loadCounter() async {
-    final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      _counter = prefs.getInt('counter') ?? 0;
+    widget.counterStorage.readCounter().then((value) {
+      setState(() {
+        _counter = value;
+      });
     });
   }
 
@@ -59,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text('File storage'),
       ),
       body: Center(
         child: Column(
