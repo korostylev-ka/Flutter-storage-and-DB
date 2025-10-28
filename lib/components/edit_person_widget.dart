@@ -1,5 +1,3 @@
-import 'dart:nativewrappers/_internal/vm/lib/ffi_allocation_patch.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_storage/db/dto/person_entity.dart';
 import 'package:flutter_storage/state/contact_book_state.dart';
@@ -39,7 +37,7 @@ class _EditPersonWidgetState extends State<EditPersonWidget> {
 
   void _delete() {
     ContactBookState state = Provider.of<ContactBookState>(context, listen: false);
-    state.edit(personContact!);
+    state.delete(personContact!);
     context.pop();
   }
 
